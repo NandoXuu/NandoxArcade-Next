@@ -25,6 +25,7 @@ data class PluginManifest(
     val validated: Boolean,
     val launchAction: String? = null,
     val launchClass: String? = null,
+    val coreLib: String? = null,
 )
 
 object PluginManifestParser {
@@ -54,6 +55,10 @@ object PluginManifestParser {
         if (type == PluginType.NATIVE_CORE && abis.isEmpty()) {
             throw PluginManifestException("abis obrigatório para core nativo")
         }
+        val coreLib = o.optString("coreLib").takeIf { it.isNotBlank() }
+        if (type == PluginType.NATIVE_CORE && coreLib == null) {
+            throw PluginManifestException("coreLib obrigatório para core nativo")
+        }
         return PluginManifest(
             id = text("id"),
             name = text("name"),
@@ -65,6 +70,7 @@ object PluginManifestParser {
             validated = o.optBoolean("validated", false),
             launchAction = o.optString("launchAction").takeIf { it.isNotBlank() },
             launchClass = o.optString("launchClass").takeIf { it.isNotBlank() },
+            coreLib = coreLib,
         )
     }
 }
@@ -78,7 +84,7 @@ enum class LaunchResult { STARTED_WITH_GAME, OPENED_APP_ONLY, FAILED }
 interface EmulatorAdapter {
     val manifest: PluginManifest
     fun diagnose(context: Context): PluginStatus
-    fun launch(context: Context, gameUri: Uri): LaunchResult
+    fun launch(context: Context, gameUri: Uri, platformId: String? = null): LaunchResult
 }
 
 class ExternalAppAdapter(override val manifest: PluginManifest) : EmulatorAdapter {
@@ -91,7 +97,7 @@ class ExternalAppAdapter(override val manifest: PluginManifest) : EmulatorAdapte
             PluginStatus.APP_NOT_INSTALLED
         }
 
-    override fun launch(context: Context, gameUri: Uri): LaunchResult {
+    override fun launch(context: Context, gameUri: Uri, platformId: String?): LaunchResult {
         if (diagnose(context) != PluginStatus.READY) return LaunchResult.FAILED
         val intent = Intent(manifest.launchAction ?: Intent.ACTION_VIEW).apply {
             if (manifest.launchClass != null) component = ComponentName(pkg, manifest.launchClass) else setPackage(pkg)
@@ -102,6 +108,30 @@ class ExternalAppAdapter(override val manifest: PluginManifest) : EmulatorAdapte
         val fallback = context.packageManager.getLaunchIntentForPackage(pkg) ?: return LaunchResult.FAILED
         return if (runCatching { context.startActivity(fallback) }.isSuccess) {
             LaunchResult.OPENED_APP_ONLY
+        } else {
+            LaunchResult.FAILED
+        }
+    }
+}
+
+/**
+ * Core libretro empacotado no APK (jniLibs) e executado dentro do próprio app pelo [EmulatorActivity].
+ * Não depende de nenhum emulador externo instalado.
+ */
+class NativeCoreAdapter(override val manifest: PluginManifest) : EmulatorAdapter {
+    private val lib = requireNotNull(manifest.coreLib)
+
+    override fun diagnose(context: Context): PluginStatus = when {
+        manifest.abis.none { it in PluginRegistry.deviceAbis } -> PluginStatus.ABI_INCOMPATIBLE
+        !File(context.applicationInfo.nativeLibraryDir, lib).exists() -> PluginStatus.RUNTIME_UNAVAILABLE
+        else -> PluginStatus.READY
+    }
+
+    override fun launch(context: Context, gameUri: Uri, platformId: String?): LaunchResult {
+        if (diagnose(context) != PluginStatus.READY) return LaunchResult.FAILED
+        val intent = EmulatorActivity.intent(context, lib, gameUri, platformId ?: manifest.platforms.first())
+        return if (runCatching { context.startActivity(intent) }.isSuccess) {
+            LaunchResult.STARTED_WITH_GAME
         } else {
             LaunchResult.FAILED
         }
@@ -156,20 +186,23 @@ object PluginLoader {
 
 class PluginRegistry(manifests: List<PluginManifest>, val rejected: List<Pair<String, String>> = emptyList()) {
     val all: List<PluginManifest> = manifests.distinctBy { it.id }
-    private val adapters: List<EmulatorAdapter> = all.mapNotNull {
-        if (it.type == PluginType.EXTERNAL_APP) ExternalAppAdapter(it) else null
+    private val adapters: List<EmulatorAdapter> = all.map {
+        when (it.type) {
+            PluginType.EXTERNAL_APP -> ExternalAppAdapter(it)
+            PluginType.NATIVE_CORE -> NativeCoreAdapter(it)
+        }
     }
 
+    /** Cores nativos vêm primeiro (jogam dentro do app); apps externos ficam como alternativa. */
     fun adaptersFor(platformId: String, store: PluginStore): List<EmulatorAdapter> =
-        adapters.filter { platformId in it.manifest.platforms && store.isEnabled(it.manifest.id) }
+        adapters
+            .filter { platformId in it.manifest.platforms && store.isEnabled(it.manifest.id) }
+            .sortedBy { if (it.manifest.type == PluginType.NATIVE_CORE) 0 else 1 }
 
     fun diagnostics(context: Context, store: PluginStore): List<PluginDiagnostic> = all.map { m ->
         val enabled = store.isEnabled(m.id)
         val status = when {
             !enabled -> PluginStatus.DISABLED
-            m.type == PluginType.NATIVE_CORE ->
-                if (m.abis.none { it in deviceAbis }) PluginStatus.ABI_INCOMPATIBLE
-                else PluginStatus.RUNTIME_UNAVAILABLE
             else -> adapters.first { it.manifest.id == m.id }.diagnose(context)
         }
         PluginDiagnostic(m, status, enabled)

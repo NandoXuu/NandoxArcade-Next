@@ -11,6 +11,10 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        // LibretroDroid (frontend libretro para Android) é distribuído via JitPack
+        maven("https://jitpack.io") {
+            content { includeGroup("com.github.Swordfish90") }
+        }
     }
 }
 

@@ -652,7 +652,7 @@ private fun PluginsScreen(registry: PluginRegistry) {
                             PluginStatus.READY -> "App instalado"
                             PluginStatus.APP_NOT_INSTALLED -> "App não instalado"
                             PluginStatus.ABI_INCOMPATIBLE -> "ABI incompatível"
-                            PluginStatus.RUNTIME_UNAVAILABLE -> "Runtime nativo indisponível"
+                            PluginStatus.RUNTIME_UNAVAILABLE -> "Core não incluído no APK"
                             PluginStatus.DISABLED -> "Desativado"
                         }
                         val validation = if (d.manifest.validated) "validado" else "não validado"

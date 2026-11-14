@@ -15,6 +15,14 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "0.1.0"
+
+        // Os cores libretro baixados por scripts/fetch_cores.sh são arm64-v8a
+        ndk { abiFilters += "arm64-v8a" }
+    }
+
+    packaging {
+        // Os cores são carregados por caminho (dlopen), então precisam ser extraídos para o disco
+        jniLibs { useLegacyPackaging = true }
     }
 
     buildTypes {
@@ -55,6 +63,7 @@ dependencies {
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
+    implementation(libs.libretrodroid)
 
     testImplementation(libs.junit)
     testImplementation(libs.org.json)
