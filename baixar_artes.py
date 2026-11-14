@@ -1,5 +1,4 @@
 import os
-import re
 import requests
 from io import BytesIO
 from PIL import Image
@@ -67,7 +66,6 @@ def buscar_imagem(termo):
             "page": info.get("descriptionurl", ""),
         })
 
-    # Prioriza arquivos PNG quando disponíveis.
     candidatos.sort(key=lambda x: (
         0 if x["mime"] == "image/png" else 1
     ))
@@ -90,12 +88,7 @@ def baixar_console(codigo, termo):
 
                 imagem = Image.open(BytesIO(response.content))
                 imagem.load()
-
-                # Preserva transparência quando disponível.
-                if imagem.mode not in ("RGBA", "LA"):
-                    imagem = imagem.convert("RGBA")
-                else:
-                    imagem = imagem.convert("RGBA")
+                imagem = imagem.convert("RGBA")
 
                 imagem.thumbnail((1400, 1400), Image.Resampling.LANCZOS)
                 imagem.save(destino, "PNG", optimize=True)
@@ -109,21 +102,30 @@ def baixar_console(codigo, termo):
                     )
 
                 print(f"[OK] {codigo}.png ({imagem.width}x{imagem.height})")
-                return
+                return True
 
             except Exception as erro:
                 print(f"[-] Imagem descartada: {erro}")
 
         print(f"[ERRO] Nenhuma imagem utilizável para {codigo}")
+        return False
 
     except Exception as erro:
         print(f"[ERRO] Pesquisa de {codigo}: {erro}")
+        return False
 
+
+sucesso = True
 
 for codigo, termo in CONSOLES.items():
-    baixar_console(codigo, termo)
+    if not baixar_console(codigo, termo):
+        sucesso = False
 
 print("\n================================")
 print("DOWNLOAD DAS ARTES CONCLUÍDO")
 print("================================")
 print("Diretório:", DESTINO)
+
+if not sucesso:
+    print("ATENÇÃO: Algumas imagens não foram baixadas.")
+    raise SystemExit(1)
