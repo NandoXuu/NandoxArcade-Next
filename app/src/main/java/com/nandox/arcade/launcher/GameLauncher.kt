@@ -13,7 +13,7 @@ object GameLauncher {
     fun launch(context: Context, registry: PluginRegistry, game: GameEntity): LaunchResult {
         val adapter = registry.adaptersFor(game.platformId, PluginStore(context))
             .firstOrNull { it.diagnose(context) == PluginStatus.READY }
-        val result = adapter?.launch(context, Uri.parse(game.uri)) ?: LaunchResult.FAILED
+        val result = adapter?.launch(context, Uri.parse(game.uri), game.platformId) ?: LaunchResult.FAILED
         if (result != LaunchResult.FAILED) SaveSettings(context).pendingSession = true
         return result
     }

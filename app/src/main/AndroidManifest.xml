@@ -34,5 +34,13 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <!-- Roda os cores libretro (jniLibs) dentro do app. Processo separado: uma falha nativa não derruba o app. -->
+        <activity
+            android:name=".emulator.EmulatorActivity"
+            android:exported="false"
+            android:process=":emulator"
+            android:screenOrientation="sensorLandscape"
+            android:hardwareAccelerated="true"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|navigation|uiMode|density" />
     </application>
 </manifest>

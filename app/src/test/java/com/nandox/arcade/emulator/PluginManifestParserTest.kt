@@ -36,4 +36,22 @@ class PluginManifestParserTest {
     fun rejectsInvalidJson() {
         assertThrows(PluginManifestException::class.java) { PluginManifestParser.parse("{") }
     }
+
+    @Test
+    fun parsesNativeCoreWithCoreLib() {
+        val m = PluginManifestParser.parse(
+            """{"id":"c","name":"C","version":"1","type":"native_core","platforms":["n64"],"abis":["arm64-v8a"],"coreLib":"libx_libretro_android.so"}"""
+        )
+        assertEquals(PluginType.NATIVE_CORE, m.type)
+        assertEquals("libx_libretro_android.so", m.coreLib)
+    }
+
+    @Test
+    fun rejectsNativeCoreWithoutCoreLib() {
+        assertThrows(PluginManifestException::class.java) {
+            PluginManifestParser.parse(
+                """{"id":"c","name":"C","version":"1","type":"native_core","platforms":["n64"],"abis":["arm64-v8a"]}"""
+            )
+        }
+    }
 }
