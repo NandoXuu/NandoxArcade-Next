@@ -1,5 +1,6 @@
 package com.nandox.arcade.ui
 
+import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -40,8 +41,11 @@ import com.nandox.arcade.downloads.DownloadImport
 import com.nandox.arcade.downloads.DownloadItem
 import com.nandox.arcade.downloads.DownloadState
 import com.nandox.arcade.downloads.DownloadsRepository
+import com.nandox.arcade.emulator.BiosCatalog
+import com.nandox.arcade.emulator.BiosInstaller
 import com.nandox.arcade.emulator.PluginRegistry
 import com.nandox.arcade.launcher.GameLauncher
+import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -115,6 +119,22 @@ fun DownloadsScreen(registry: PluginRegistry) {
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontSize = 13.sp,
                         )
+                    }
+                    if (d.state == DownloadState.DONE && BiosCatalog.looksLikeBiosCandidate(d.title)) {
+                        OutlinedButton(onClick = {
+                            scope.launch {
+                                val text = withContext(Dispatchers.IO) {
+                                    val path = d.localUri?.let { Uri.parse(it).path }
+                                    if (path == null) {
+                                        "Arquivo não encontrado"
+                                    } else {
+                                        runCatching { BiosInstaller.installFile(context, File(path)).summary }
+                                            .getOrElse { "Não foi possível ler o arquivo" }
+                                    }
+                                }
+                                Toast.makeText(context, text, Toast.LENGTH_LONG).show()
+                            }
+                        }) { Text("BIOS") }
                     }
                     if (d.state == DownloadState.DONE) {
                         Button(onClick = {

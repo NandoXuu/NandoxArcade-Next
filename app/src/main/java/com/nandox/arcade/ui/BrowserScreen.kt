@@ -51,7 +51,7 @@ private data class PendingDownload(val url: String, val name: String, val mime: 
 
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
-fun BrowserScreen(onExit: () -> Unit, onDownloads: () -> Unit) {
+fun BrowserScreen(onExit: () -> Unit, onDownloads: () -> Unit, onBios: () -> Unit = {}) {
     val context = LocalContext.current
     val repo = remember { DownloadsRepository(context) }
     var urlText by remember { mutableStateOf("") }
@@ -144,6 +144,7 @@ fun BrowserScreen(onExit: () -> Unit, onDownloads: () -> Unit) {
                 browserSettings.engine = engine
             }) { Text("Busca: ${engine.label}") }
             OutlinedButton(onClick = onDownloads) { Text("Downloads") }
+            OutlinedButton(onClick = onBios) { Text("BIOS") }
         }
         Text(summary, fontSize = 13.sp)
         AndroidView(factory = { webView }, modifier = Modifier.weight(1f).fillMaxWidth())

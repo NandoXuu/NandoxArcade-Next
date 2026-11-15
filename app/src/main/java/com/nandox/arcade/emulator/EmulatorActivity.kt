@@ -90,7 +90,7 @@ class EmulatorActivity : ComponentActivity() {
             fail("Core não encontrado no APK: $coreLib")
             return
         }
-        val saves = File(baseDir(), "saves").apply { mkdirs() }
+        val saves = SystemDirs.saves(this)
         val sram = File(saves, "$gameKey.srm").also { sramFile = it }
 
         val data = GLRetroViewData(this).apply {
@@ -113,7 +113,7 @@ class EmulatorActivity : ComponentActivity() {
 
     private fun errorText(code: Int): String = when (code) {
         GLRetroView.ERROR_LOAD_LIBRARY -> "Falha ao carregar o core do emulador"
-        GLRetroView.ERROR_LOAD_GAME -> "O core não conseguiu abrir este jogo (arquivo inválido ou BIOS ausente)"
+        GLRetroView.ERROR_LOAD_GAME -> "O core não conseguiu abrir este jogo. Se for um console que usa BIOS, instale em Configurações > BIOS"
         GLRetroView.ERROR_GL_NOT_COMPATIBLE -> "A GPU deste aparelho não é compatível com este core"
         else -> "Erro no emulador"
     }
@@ -123,10 +123,7 @@ class EmulatorActivity : ComponentActivity() {
         finish()
     }
 
-    private fun baseDir(): File = getExternalFilesDir(null) ?: filesDir
-
-    /** BIOS e arquivos de sistema dos cores ficam aqui: Android/data/<pacote>/files/system */
-    private fun systemDir(): File = File(baseDir(), "system").apply { mkdirs() }
+    private fun systemDir(): File = SystemDirs.system(this)
 
     private fun sendKey(code: Int, down: Boolean) {
         retroView?.sendKeyEvent(if (down) KeyEvent.ACTION_DOWN else KeyEvent.ACTION_UP, code)

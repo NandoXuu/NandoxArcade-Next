@@ -124,6 +124,7 @@ fun ArcadeApp(controls: ControlsController) {
                     onBrowser = { nav.navigate("browser") },
                     onDownloads = { nav.navigate("downloads") },
                     onPlugins = { nav.navigate("plugins") },
+                    onBios = { nav.navigate("bios") },
                     onSettings = { nav.navigate("settings") },
                 )
             }
@@ -140,7 +141,14 @@ fun ArcadeApp(controls: ControlsController) {
             }
             composable("saves") { SaveManagerScreen(registry) }
             composable("catalog") { CatalogScreen(registry) }
-            composable("browser") { BrowserScreen(onExit = { nav.popBackStack() }, onDownloads = { nav.navigate("downloads") }) }
+            composable("browser") {
+                BrowserScreen(
+                    onExit = { nav.popBackStack() },
+                    onDownloads = { nav.navigate("downloads") },
+                    onBios = { nav.navigate("bios") },
+                )
+            }
+            composable("bios") { BiosScreen(onBrowser = { nav.navigate("browser") }) }
             composable("downloads") { DownloadsScreen(registry) }
             composable("sources") { SourcesScreen() }
             composable("plugins") { PluginsScreen(registry) }
@@ -150,6 +158,7 @@ fun ArcadeApp(controls: ControlsController) {
                     onPlugins = { nav.navigate("plugins") },
                     onSources = { nav.navigate("sources") },
                     onSaves = { nav.navigate("saves") },
+                    onBios = { nav.navigate("bios") },
                 )
             }
             composable("controls") { ControlsScreen(controls) }
@@ -165,6 +174,7 @@ private fun HomeScreen(
     onBrowser: () -> Unit,
     onDownloads: () -> Unit,
     onPlugins: () -> Unit,
+    onBios: () -> Unit,
     onSettings: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -464,6 +474,7 @@ private fun HomeScreen(
                         "Navegador" to onBrowser,
                         "Downloads" to onDownloads,
                         "Emuladores" to onPlugins,
+                        "BIOS" to onBios,
                         "Ajustes" to onSettings,
                     ).forEach { (label, action) ->
                         OutlinedButton(
@@ -684,6 +695,7 @@ private fun SettingsScreen(
     onPlugins: () -> Unit,
     onSources: () -> Unit,
     onSaves: () -> Unit,
+    onBios: () -> Unit,
 ) {
     val context = LocalContext.current
     var showDeviceInfo by remember { mutableStateOf(true) }
@@ -708,6 +720,7 @@ private fun SettingsScreen(
         SettingsGroup(title = "GERENCIAMENTO") {
             SettingsAction("Controles e gamepad", "Mapeamento de botões e navegação", "⌘", onControls)
             SettingsAction("Emuladores e plugins", "Estado, compatibilidade e integrações", "◈", onPlugins)
+            SettingsAction("BIOS dos emuladores", "Instalar BIOS: importar ou baixar pelo navegador", "▥", onBios)
             SettingsAction("Pastas e armazenamento", "Locais de jogos e permissões SAF", "▤", onSources)
             SettingsAction("Dados salvos", "Saves, backups e gerenciamento", "▣", onSaves)
         }
