@@ -68,6 +68,15 @@ object RomStager {
 
     /** Copia, da mesma pasta do jogo, os arquivos citados no índice. */
     private fun copySiblings(context: Context, gameUri: Uri, dir: File, names: List<String>) {
+        if (gameUri.scheme == "file") {
+            val parent = gameUri.path?.let { File(it).parentFile } ?: return
+            val byLower = parent.listFiles()?.associateBy { it.name.lowercase() }.orEmpty()
+            for (n in names) {
+                val src = byLower[n.lowercase()] ?: continue
+                src.copyTo(File(dir, n), overwrite = true)
+            }
+            return
+        }
         val authority = gameUri.authority ?: return
         val treeId = runCatching { DocumentsContract.getTreeDocumentId(gameUri) }.getOrNull() ?: return
         val docId = runCatching { DocumentsContract.getDocumentId(gameUri) }.getOrNull() ?: return

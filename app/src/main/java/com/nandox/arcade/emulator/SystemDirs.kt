@@ -10,5 +10,8 @@ object SystemDirs {
     /** BIOS e arquivos de sistema: Android/data/<pacote>/files/system */
     fun system(context: Context): File = File(base(context), "system").apply { mkdirs() }
 
+    /** BIOS que foram trocadas por outra escolhida pelo usuário. Ficam aqui em vez de serem apagadas. */
+    fun unused(context: Context): File = File(base(context), "bios_unused").apply { mkdirs() }
+
     fun saves(context: Context): File = File(base(context), "saves").apply { mkdirs() }
 }

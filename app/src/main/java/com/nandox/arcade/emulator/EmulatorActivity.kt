@@ -1,6 +1,7 @@
 package com.nandox.arcade.emulator
 
 import android.app.Activity
+import android.content.ClipData
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -221,7 +222,9 @@ class EmulatorActivity : ComponentActivity() {
                 putExtra(EXTRA_CORE_LIB, coreLib)
                 putExtra(EXTRA_GAME_URI, gameUri.toString())
                 putExtra(EXTRA_PLATFORM, platformId)
-                // o Uri é lido pelo processo ":emulator"; o acesso à árvore do SAF já foi concedido ao app
+                // O arquivo pode vir de outro app ("Abrir com"): repassa a permissão temporária de leitura
+                clipData = ClipData.newRawUri("jogo", gameUri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 if (context !is Activity) addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
     }

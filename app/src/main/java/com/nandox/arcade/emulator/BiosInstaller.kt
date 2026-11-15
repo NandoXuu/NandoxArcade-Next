@@ -63,10 +63,27 @@ object BiosInstaller {
         return if (part.renameTo(dest)) rel else null
     }
 
-    private fun displayName(context: Context, uri: Uri): String {
+    fun displayName(context: Context, uri: Uri): String {
         context.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use {
             if (it.moveToFirst()) it.getString(0)?.let { n -> return n }
         }
         return uri.lastPathSegment ?: "arquivo"
+    }
+
+    /** Define o arquivo escolhido como BIOS do grupo (ver [BiosAssigner]) e anota qual foi. Devolve o espaço usado. */
+    fun assignUri(context: Context, group: BiosGroup, slotRel: String?, uri: Uri): String {
+        val name = displayName(context, uri)
+        val input = context.contentResolver.openInputStream(uri)
+            ?: throw java.io.IOException("não foi possível abrir o arquivo")
+        return input.use { finishAssign(context, group, slotRel, name, it) }
+    }
+
+    fun assignFile(context: Context, group: BiosGroup, slotRel: String?, file: File): String =
+        file.inputStream().use { finishAssign(context, group, slotRel, file.name, it) }
+
+    private fun finishAssign(context: Context, group: BiosGroup, slotRel: String?, name: String, input: InputStream): String {
+        val slot = BiosAssigner.assign(SystemDirs.system(context), SystemDirs.unused(context), group, slotRel, name, input)
+        BiosSettings(context).setInUse(group, slot, name)
+        return slot
     }
 }

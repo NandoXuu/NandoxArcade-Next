@@ -4,4 +4,11 @@
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
     </style>
+    <!-- Activity sem tela própria: só mostra um diálogo por cima do gerenciador de arquivos -->
+    <style name="Theme.NandoxArcade.Transparent" parent="Theme.NandoxArcade">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:backgroundDimEnabled">false</item>
+    </style>
 </resources>

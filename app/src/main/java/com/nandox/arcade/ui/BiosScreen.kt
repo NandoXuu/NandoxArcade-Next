@@ -21,6 +21,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -32,7 +33,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.nandox.arcade.emulator.BiosCatalog
+import com.nandox.arcade.emulator.BiosGroup
 import com.nandox.arcade.emulator.BiosInstaller
+import com.nandox.arcade.emulator.BiosSettings
 import com.nandox.arcade.emulator.BiosNeed
 import com.nandox.arcade.emulator.SystemDirs
 import kotlinx.coroutines.Dispatchers
@@ -45,6 +48,8 @@ fun BiosScreen(onBrowser: () -> Unit) {
     val scope = rememberCoroutineScope()
     var refresh by remember { mutableIntStateOf(0) }
     val systemDir = remember { SystemDirs.system(context) }
+    val settings = remember { BiosSettings(context) }
+    var assigning by remember { mutableStateOf<BiosGroup?>(null) }
 
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
         if (uris.isEmpty()) return@rememberLauncherForActivityResult
@@ -101,6 +106,11 @@ fun BiosScreen(onBrowser: () -> Unit) {
                         fontWeight = FontWeight.SemiBold,
                     )
                     Text(g.note, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
+                    g.files.mapNotNull { f -> settings.inUse(g, f)?.let { f.substringAfterLast('/') to it } }
+                        .forEach { (slot, original) ->
+                            Text("Em uso: $slot ← $original", fontSize = 12.sp)
+                        }
+                    OutlinedButton(onClick = { assigning = g }) { Text("Definir BIOS") }
                     if (!ok) {
                         Text(
                             (if (g.anyOf) "Nomes aceitos: " else "Faltando: ") +
@@ -110,6 +120,9 @@ fun BiosScreen(onBrowser: () -> Unit) {
                     }
                 }
             }
+        }
+        assigning?.let { g ->
+            BiosAssignFlow(g, onDismiss = { assigning = null }, onDone = { assigning = null; refresh++ })
         }
         Text(BiosCatalog.NO_BIOS_NOTE, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
         Spacer(Modifier.height(4.dp))

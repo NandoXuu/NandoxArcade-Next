@@ -637,6 +637,7 @@ private fun PluginsScreen(registry: PluginRegistry) {
     val context = LocalContext.current
     val store = remember { PluginStore(context) }
     var diagnostics by remember { mutableStateOf(registry.diagnostics(context, store)) }
+    var assigningBios by remember { mutableStateOf<com.nandox.arcade.emulator.BiosGroup?>(null) }
     Column(Modifier.fillMaxSize().padding(24.dp)) {
         Text("Plugins de emulação", fontSize = 24.sp, fontWeight = FontWeight.Bold)
         Text(
@@ -668,6 +669,16 @@ private fun PluginsScreen(registry: PluginRegistry) {
                         }
                         val validation = if (d.manifest.validated) "validado" else "não validado"
                         Text("$status · $validation", fontSize = 13.sp)
+                        // só os cores embutidos têm BIOS gerenciada pelo app; apps externos cuidam da própria
+                        if (d.manifest.type == com.nandox.arcade.emulator.PluginType.NATIVE_CORE) {
+                            com.nandox.arcade.emulator.BiosCatalog.groups
+                                .firstOrNull { it.platformId in d.manifest.platforms }
+                                ?.let { g ->
+                                    androidx.compose.material3.OutlinedButton(onClick = { assigningBios = g }) {
+                                        Text("Definir BIOS")
+                                    }
+                                }
+                        }
                     }
                     Switch(
                         checked = d.enabled,
@@ -686,6 +697,9 @@ private fun PluginsScreen(registry: PluginRegistry) {
                 )
             }
         }
+    }
+    assigningBios?.let { g ->
+        BiosAssignFlow(g, onDismiss = { assigningBios = null }, onDone = { assigningBios = null })
     }
 }
 
