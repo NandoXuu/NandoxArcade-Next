@@ -18,6 +18,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.nandox.arcade.core.Platform
+import com.nandox.arcade.core.Platforms
 import com.nandox.arcade.core.RomIdentity
 import com.nandox.arcade.core.RomMatch
 import com.nandox.arcade.data.GameEntity
@@ -35,7 +36,8 @@ class OpenGameActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val data = intent?.data
+        val isShare = intent?.action == Intent.ACTION_SEND || intent?.action == Intent.ACTION_SEND_MULTIPLE
+        val data = if (isShare) sharedUri() else intent?.data
         if (data == null) {
             finish()
             return
@@ -46,6 +48,17 @@ class OpenGameActivity : ComponentActivity() {
         }
         val name = displayName(data)
         title = name.substringBeforeLast('.')
+
+        // Na lista "Compartilhar" o NDX aparece para qualquer arquivo; só segue se for uma ROM conhecida
+        val ext = name.substringAfterLast('.', "").lowercase()
+        if (isShare && Platforms.all.none { ext in it.extensions }) {
+            Toast.makeText(this, "Formato não reconhecido: $name", Toast.LENGTH_LONG).show()
+            finish()
+            return
+        }
+        if (isShare && (intent.clipData?.itemCount ?: 1) > 1) {
+            Toast.makeText(this, "Vários arquivos: abrindo o primeiro", Toast.LENGTH_SHORT).show()
+        }
 
         when (val match = RomIdentity.match(name, RomIdentity.folderNames(data.path))) {
             is RomMatch.Known -> start(match.platformId)
@@ -73,6 +86,13 @@ class OpenGameActivity : ComponentActivity() {
             }
         }
     }
+
+    /** Arquivo recebido por "Compartilhar": vem no ClipData (ou, em apps antigos, em EXTRA_STREAM). */
+    @Suppress("DEPRECATION")
+    private fun sharedUri(): Uri? =
+        intent.clipData?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.uri
+            ?: intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)
+            ?: intent.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM)?.firstOrNull()
 
     private fun start(platformId: String) {
         val registry = PluginRegistry.load(this)

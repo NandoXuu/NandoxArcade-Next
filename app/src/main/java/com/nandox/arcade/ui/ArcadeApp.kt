@@ -525,6 +525,11 @@ private fun LibraryScreen(
     val sources by remember { dao.observeSources() }.collectAsStateWithLifecycle(initialValue = emptyList())
     var scanning by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
+    val biosGroup = remember(platformId) {
+        com.nandox.arcade.emulator.BiosCatalog.groups.firstOrNull { it.platformId == platformId }
+    }
+    var assigningBios by remember { mutableStateOf(false) }
+    var biosVersion by remember { mutableIntStateOf(0) }
 
     var statuses by remember { mutableStateOf<Map<Long, SourceStatus>>(emptyMap()) }
     LaunchedEffect(sources) {
@@ -580,6 +585,8 @@ private fun LibraryScreen(
     Column(Modifier.fillMaxSize().padding(24.dp)) {
         Text(platform?.name ?: "Não classificados", fontSize = 24.sp, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(12.dp))
+        biosGroup?.let { BiosCard(it, biosVersion) { assigningBios = true } }
+        if (biosGroup != null) Spacer(Modifier.height(12.dp))
         Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             OutlinedButton(onClick = { importer.launch(arrayOf("*/*")) }) { Text("Importar jogo") }
             OutlinedButton(onClick = onSources) { Text("Pastas") }
@@ -629,6 +636,13 @@ private fun LibraryScreen(
                 }
             }
         }
+    }
+    if (assigningBios && biosGroup != null) {
+        BiosAssignFlow(
+            biosGroup,
+            onDismiss = { assigningBios = false },
+            onDone = { assigningBios = false; biosVersion++ },
+        )
     }
 }
 

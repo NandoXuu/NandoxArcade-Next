@@ -52,6 +52,15 @@ def filt(with_mime):
             </intent-filter>"""
 
 
+# Lista "Compartilhar" dos gerenciadores (a mesma onde aparecem WhatsApp, Drive...). Aqui o Android não
+# entrega o caminho do arquivo, só o tipo MIME, então o filtro é por tipo e a extensão é checada no app.
+SHARE = """            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="*/*" />
+            </intent-filter>"""
+
 block = f"""        {START}
         <!-- Aparece em "Abrir com" do gerenciador de arquivos para: {', '.join(exts)} -->
         <activity
@@ -61,6 +70,7 @@ block = f"""        {START}
             android:theme="@style/Theme.NandoxArcade.Transparent">
 {filt(True)}
 {filt(False)}
+{SHARE}
         </activity>
         {END}"""
 

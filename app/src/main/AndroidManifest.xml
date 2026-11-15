@@ -370,6 +370,12 @@
                 <data android:pathPattern=".*\\..*\\..*\\.WBFS" />
                 <data android:pathPattern=".*\\..*\\..*\\..*\\.WBFS" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="*/*" />
+            </intent-filter>
         </activity>
         <!-- ROM-FILTERS-END -->
     </application>

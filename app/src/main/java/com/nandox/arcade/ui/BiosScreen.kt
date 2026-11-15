@@ -132,3 +132,33 @@ fun BiosScreen(onBrowser: () -> Unit) {
         )
     }
 }
+
+/** Cartão no topo da seção de um console: mostra se há BIOS carregada e o botão para carregar. */
+@Composable
+fun BiosCard(group: BiosGroup, version: Int, onLoad: () -> Unit) {
+    val context = LocalContext.current
+    val systemDir = remember { SystemDirs.system(context) }
+    val settings = remember { BiosSettings(context) }
+    // "version" muda depois de carregar uma BIOS e força reler o estado
+    val present = remember(version) { group.files.filter { java.io.File(systemDir, it).isFile } }
+    val complete = remember(version) { BiosCatalog.isPresent(group, systemDir) }
+    val names = present.joinToString { settings.inUse(group, it) ?: it.substringAfterLast('/') }
+
+    Column(
+        Modifier.fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
+            .padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Text(
+            when {
+                complete -> "✓ BIOS carregada: $names"
+                present.isNotEmpty() -> "BIOS incompleta (${present.size}/${group.files.size}): $names"
+                else -> "BIOS não carregada"
+            },
+            fontWeight = FontWeight.SemiBold,
+        )
+        Text(group.note, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
+        Button(onClick = onLoad) { Text(if (present.isEmpty()) "Carregar BIOS" else "Trocar BIOS") }
+    }
+}

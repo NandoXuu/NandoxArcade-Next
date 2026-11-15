@@ -35,6 +35,13 @@ class BiosInstallerTest {
     }
 
     @Test
+    fun everyPlatformWithABiosGroupHasOneButtonTarget() {
+        val ids = BiosCatalog.groups.map { it.platformId }
+        assertEquals(ids.size, ids.toSet().size)
+        assertTrue("ps2" in ids && "ps1" in ids && "nds" in ids && "dreamcast" in ids)
+    }
+
+    @Test
     fun installsSingleKnownFile() {
         val system = tmp.newFolder("system")
         val r = BiosInstaller.installStream(system, "bios7.bin", ByteArrayInputStream(byteArrayOf(1, 2, 3)))

@@ -20,6 +20,13 @@ class OpenWithManifestTest {
     }
 
     @Test
+    fun openGameActivityAppearsInTheShareSheet() {
+        val block = manifest.substringAfter(".launcher.OpenGameActivity").substringBefore("</activity>")
+        assertTrue(block.contains("android.intent.action.SEND\""))
+        assertTrue(block.contains("android.intent.action.SEND_MULTIPLE"))
+    }
+
+    @Test
     fun openGameActivityIsExportedAndHandlesView() {
         val block = manifest.substringAfter(".launcher.OpenGameActivity").substringBefore("</activity>")
         assertTrue(block.contains("""android:exported="true""""))

@@ -38,6 +38,13 @@ object BiosCatalog {
             note = "O Flycast tem um modo substituto, mas a BIOS melhora a compatibilidade.",
         ),
         BiosGroup(
+            "ps2", "PlayStation 2",
+            listOf("ps2/ps2_bios.bin"),
+            anyOf = true, need = BiosNeed.RECOMMENDED,
+            note = "O NDX ainda não tem emulador de PS2 embutido (não existe core de PS2 para Android no libretro). " +
+                "A BIOS fica guardada no app, mas apps externos como o NetherSX2 leem a BIOS da pasta deles.",
+        ),
+        BiosGroup(
             "gba", "Game Boy Advance",
             listOf("gba_bios.bin"),
             anyOf = false, need = BiosNeed.OPTIONAL,

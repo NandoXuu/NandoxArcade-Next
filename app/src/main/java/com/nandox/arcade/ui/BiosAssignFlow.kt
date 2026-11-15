@@ -1,6 +1,9 @@
 package com.nandox.arcade.ui
 
+import android.content.Context
+import android.content.Intent
 import android.net.Uri
+import android.provider.DocumentsContract
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -34,6 +37,17 @@ import kotlinx.coroutines.withContext
 
 private enum class Step { SLOT, SOURCE, DOWNLOADS }
 
+/** Seletor de arquivos que já abre na pasta Downloads do aparelho. */
+private class OpenDocumentFromDownloads : ActivityResultContracts.OpenDocument() {
+    override fun createIntent(context: Context, input: Array<String>): Intent =
+        super.createIntent(context, input).apply {
+            putExtra(
+                DocumentsContract.EXTRA_INITIAL_URI,
+                DocumentsContract.buildDocumentUri("com.android.externalstorage.documents", "primary:Download"),
+            )
+        }
+}
+
 /**
  * Passo a passo para definir a BIOS de um console:
  * (se preciso) qual arquivo -> de onde pegar (aparelho ou downloads do NDX) -> pronto.
@@ -58,7 +72,7 @@ fun BiosAssignFlow(group: BiosGroup, onDismiss: () -> Unit, onDone: () -> Unit) 
         }
     }
 
-    val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
+    val picker = rememberLauncherForActivityResult(OpenDocumentFromDownloads()) { uri: Uri? ->
         if (uri == null) onDismiss() else finish { BiosInstaller.assignUri(context, group, slot, uri) }
     }
 
